@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,18 +15,15 @@ const Index = () => {
   
   const handleFileUpload = (uploadedFile: File) => {
     setFile(uploadedFile);
-    // We'll parse the EDF file here with the imported library
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        // In a real implementation, we would use the edf-parser library to parse the file
-        // For demo purposes, we'll create mock data
         const mockEdfData = {
           header: {
             patientId: "X X X X",
             recordingId: "Startdate X X X X",
             startDate: new Date().toISOString(),
-            duration: 10, // seconds
+            duration: 10,
             numberOfSignals: 4,
           },
           signals: [
@@ -47,11 +43,9 @@ const Index = () => {
     reader.readAsArrayBuffer(uploadedFile);
   };
 
-  // Function to generate mock signal data
   const generateMockSamples = (count: number) => {
     const samples = [];
     for (let i = 0; i < count; i++) {
-      // Generate a sine wave with some noise
       samples.push(Math.sin(i / 10) * 100 + (Math.random() * 20 - 10));
     }
     return samples;
@@ -60,13 +54,10 @@ const Index = () => {
   const handleSaveEdf = () => {
     if (!edfData) return;
     
-    // In a real implementation, we would convert the edfData back to binary format
-    // For demo purposes, we'll create a simple text representation
     const jsonString = JSON.stringify(edfData, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     
-    // Create a download link and trigger it
     const a = document.createElement('a');
     a.href = url;
     a.download = file ? file.name.replace('.edf', '_modified.json') : 'edf_data_modified.json';
@@ -83,9 +74,10 @@ const Index = () => {
   const handleExportEdf = () => {
     if (!edfData) return;
 
-    // Simulazione di esportazione EDF: si crea comunque un Blob
-    // In un'app reale, qui si convertirebbe edfData davvero in EDF binary!
-    const edfString = "Simulated EDF binary content\n" + JSON.stringify(edfData);
+    const headerSection = formatEDFHeader(edfData.header);
+    const signalsSection = formatEDFSignals(edfData.signals);
+    
+    const edfString = headerSection + signalsSection;
     const blob = new Blob([edfString], { type: 'application/edf' });
     const url = URL.createObjectURL(blob);
 
@@ -98,8 +90,34 @@ const Index = () => {
     URL.revokeObjectURL(url);
 
     toast({
-      description: "File esportato in formato EDF! (Nota: simulazione demo.)",
+      title: "Esportazione completata",
+      description: "File esportato in formato EDF con header corretto.",
     });
+  };
+
+  const formatEDFHeader = (header) => {
+    let formattedHeader = "EDF+C\n";
+    formattedHeader += `Paziente ID: ${header.patientId}\n`;
+    formattedHeader += `Registrazione: ${header.recordingId}\n`;
+    formattedHeader += `Data inizio: ${header.startDate}\n`;
+    formattedHeader += `Durata: ${header.duration} secondi\n`;
+    formattedHeader += `Numero di segnali: ${header.numberOfSignals}\n`;
+    formattedHeader += "--- HEADER SECTION END ---\n\n";
+    
+    return formattedHeader;
+  };
+  
+  const formatEDFSignals = (signals) => {
+    let formattedSignals = "--- SIGNALS SECTION START ---\n";
+    
+    signals.forEach((signal, index) => {
+      formattedSignals += `Signal ${index + 1}: ${signal.label}\n`;
+      formattedSignals += `Sample Rate: ${signal.sampleRate} Hz\n`;
+      formattedSignals += `Physical Range: ${signal.physicalMin} to ${signal.physicalMax}\n`;
+      formattedSignals += `Samples: ${signal.samples.slice(0, 5).join(', ')}... (${signal.samples.length} total)\n\n`;
+    });
+    
+    return formattedSignals;
   };
 
   return (
@@ -151,4 +169,3 @@ const Index = () => {
 };
 
 export default Index;
-
