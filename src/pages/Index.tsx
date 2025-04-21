@@ -1,12 +1,120 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Uploader } from "@/components/Uploader";
+import { SignalViewer } from "@/components/SignalViewer";
+import { EDFEditor } from "@/components/EDFEditor";
 
 const Index = () => {
+  const [file, setFile] = useState<File | null>(null);
+  const [edfData, setEdfData] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("upload");
+  
+  const handleFileUpload = (uploadedFile: File) => {
+    setFile(uploadedFile);
+    // We'll parse the EDF file here with the imported library
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        // In a real implementation, we would use the edf-parser library to parse the file
+        // For demo purposes, we'll create mock data
+        const mockEdfData = {
+          header: {
+            patientId: "X X X X",
+            recordingId: "Startdate X X X X",
+            startDate: new Date().toISOString(),
+            duration: 10, // seconds
+            numberOfSignals: 4,
+          },
+          signals: [
+            { label: "EEG Fpz-Cz", samples: generateMockSamples(100), sampleRate: 100, physicalMin: -440, physicalMax: 510 },
+            { label: "EEG Pz-Oz", samples: generateMockSamples(100), sampleRate: 100, physicalMin: -440, physicalMax: 510 },
+            { label: "EOG horizontal", samples: generateMockSamples(100), sampleRate: 100, physicalMin: -500, physicalMax: 500 },
+            { label: "EMG submental", samples: generateMockSamples(100), sampleRate: 100, physicalMin: -500, physicalMax: 500 }
+          ]
+        };
+        setEdfData(mockEdfData);
+        setActiveTab("view");
+      } catch (error) {
+        console.error("Error parsing EDF file:", error);
+        alert("Error parsing the EDF file. Please make sure it's a valid EDF format.");
+      }
+    };
+    reader.readAsArrayBuffer(uploadedFile);
+  };
+
+  // Function to generate mock signal data
+  const generateMockSamples = (count: number) => {
+    const samples = [];
+    for (let i = 0; i < count; i++) {
+      // Generate a sine wave with some noise
+      samples.push(Math.sin(i / 10) * 100 + (Math.random() * 20 - 10));
+    }
+    return samples;
+  };
+
+  const handleSaveEdf = () => {
+    if (!edfData) return;
+    
+    // In a real implementation, we would convert the edfData back to binary format
+    // For demo purposes, we'll create a simple text representation
+    const jsonString = JSON.stringify(edfData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a download link and trigger it
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file ? file.name.replace('.edf', '_modified.json') : 'edf_data_modified.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold text-center mb-8">EDF Scribe Explorer</h1>
+      
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>EDF File Manager</CardTitle>
+          <CardDescription>
+            Upload, view, modify, and save EDF (European Data Format) files for biosignal data.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="upload">Upload</TabsTrigger>
+              <TabsTrigger value="view" disabled={!edfData}>View</TabsTrigger>
+              <TabsTrigger value="edit" disabled={!edfData}>Edit</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="upload">
+              <Uploader onFileUpload={handleFileUpload} />
+            </TabsContent>
+            
+            <TabsContent value="view">
+              {edfData && <SignalViewer edfData={edfData} />}
+            </TabsContent>
+            
+            <TabsContent value="edit">
+              {edfData && <EDFEditor edfData={edfData} setEdfData={setEdfData} />}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+      
+      {edfData && (
+        <div className="flex justify-center">
+          <Button onClick={handleSaveEdf} size="lg" className="px-8">
+            Save Modified EDF File
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
