@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -99,9 +98,10 @@ const Index = () => {
   const formatEDFHeader = (header) => {
     let formattedHeader = "EDF+C\n";
     formattedHeader += `Paziente ID: ${header.patientId || "Unknown"}\n`;
-    formattedHeader += `Paziente Nome: ${header.patientId ? header.patientId.split(' ')[0] : "Unknown"}\n`;
-    formattedHeader += `Paziente Cognome: ${header.patientId ? header.patientId.split(' ')[1] : "Unknown"}\n`;
-    formattedHeader += `Registrazione: ${header.recordingId}\n`;
+    const patientNameParts = header.patientId ? header.patientId.split(' ') : ["Unknown", "Unknown"];
+    formattedHeader += `Paziente Nome: ${patientNameParts[0]}\n`;
+    formattedHeader += `Paziente Cognome: ${patientNameParts.length > 1 ? patientNameParts[1] : "Unknown"}\n`;
+    formattedHeader += `Registrazione: ${header.recordingId || "Unknown"}\n`;
     formattedHeader += `Data inizio: ${header.startDate}\n`;
     formattedHeader += `Durata: ${header.duration} secondi\n`;
     formattedHeader += `Numero di segnali: ${header.numberOfSignals}\n`;
