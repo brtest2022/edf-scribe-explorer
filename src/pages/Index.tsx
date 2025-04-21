@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Uploader } from "@/components/Uploader";
 import { SignalViewer } from "@/components/SignalViewer";
 import { EDFEditor } from "@/components/EDFEditor";
+import { Download } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -72,6 +74,32 @@ const Index = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
+    toast({
+      description: "File modificato salvato come JSON.",
+    });
+  };
+
+  const handleExportEdf = () => {
+    if (!edfData) return;
+
+    // Simulazione di esportazione EDF: si crea comunque un Blob
+    // In un'app reale, qui si convertirebbe edfData davvero in EDF binary!
+    const edfString = "Simulated EDF binary content\n" + JSON.stringify(edfData);
+    const blob = new Blob([edfString], { type: 'application/edf' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file ? file.name.replace('.edf', '_esportato.edf') : 'edf_modificato.esportato.edf';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      description: "File esportato in formato EDF! (Nota: simulazione demo.)",
+    });
   };
 
   return (
@@ -109,9 +137,12 @@ const Index = () => {
       </Card>
       
       {edfData && (
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-4">
           <Button onClick={handleSaveEdf} size="lg" className="px-8">
             Save Modified EDF File
+          </Button>
+          <Button onClick={handleExportEdf} size="lg" variant="outline" className="px-8 flex items-center gap-2">
+            <Download className="mr-2" /> Esporta in EDF
           </Button>
         </div>
       )}
@@ -120,3 +151,4 @@ const Index = () => {
 };
 
 export default Index;
+
